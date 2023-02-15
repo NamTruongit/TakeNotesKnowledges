@@ -1,0 +1,49 @@
+Pakage: - Microsoft.AspNetCore.Identity.EntityFrameworkCore 6.0.13(.net 6)
+	- Microsoft.AspNetCore.Identity.UI (6.0.13 .net 6)
+	- Microsoft.EntityFrameworkCore.Tools(7.0.2 support .net 6)
+	- Microsoft.EntityFrameworkCore.SqlServer(7.0.2 support.net6) 
+	- Microsoft.Extensions.DependencyInjection(7.0.0)
+	- IdentityServer4(4.1.2)
+	- IdentityServer4.EntityFramework(4.1.2)
+	- IdentityServer4.AspNetIdentity
+	
+
+	
+ Config:
+
+	builder.Services.AddIdentityServer(options =>
+	{   
+   		 options.Events.RaiseErrorEvents = true;
+  		 options.Events.RaiseInformationEvents = true;
+  		 options.Events.RaiseFailureEvents = true;
+   		 options.Events.RaiseSuccessEvents = true;
+	})
+ - InMemory: 
+    .AddInMemoryApiResources(Config.Apis)
+    .AddInMemoryClients(builder.Configuration.GetSection("IdentityServer:Clients"))
+    .AddInMemoryIdentityResources(Config.Ids)
+    .AddInMemoryApiScopes(Config.ApiScopes)
+    .AddAspNetIdentity<ManageUser>()
+    .AddDeveloperSigningCredential();
+
+- Db: use database to save values
+	var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
+	const string connectionString = @"Data Source=(LocalDb)\MSSQLLocalDB;database=IdentityServer4.Quickstart.EntityFramework-4.0.0;trusted_connection=yes;";
+
+	services.AddIdentityServer()
+    	.AddTestUsers(TestUsers.Users)
+    	.AddConfigurationStore(options =>
+    	{
+       		 options.ConfigureDbContext = b => b.UseSqlServer(connectionString,
+          	  sql => sql.MigrationsAssembly(migrationsAssembly));
+    	})
+    	.AddOperationalStore(options =>
+    	{
+        	options.ConfigureDbContext = b => b.UseSqlServer(connectionString,
+           	 sql => sql.MigrationsAssembly(migrationsAssembly));
+    	});
+
+ 	+ when we use db to save values ,we must config 3 type :ApiScope,ApiResource,Client
+		.ApiScope: https://identityserver4.readthedocs.io/en/latest/reference/api_scope.html
+		.ApiResource: https://identityserver4.readthedocs.io/en/latest/reference/api_resource.html
+		.Client: https://identityserver4.readthedocs.io/en/latest/reference/client.html
