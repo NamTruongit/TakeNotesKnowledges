@@ -1,4 +1,5 @@
-Pakage: - Microsoft.AspNetCore.Identity.EntityFrameworkCore 6.0.13(.net 6)
+Pakage: Các thư viện cần thêm vào để có thể triển khai IdentityServer4
+	- Microsoft.AspNetCore.Identity.EntityFrameworkCore 6.0.13(.net 6)
 	- Microsoft.AspNetCore.Identity.UI (6.0.13 .net 6)
 	- Microsoft.EntityFrameworkCore.Tools(7.0.2 support .net 6)
 	- Microsoft.EntityFrameworkCore.SqlServer(7.0.2 support.net6) 
@@ -9,41 +10,94 @@ Pakage: - Microsoft.AspNetCore.Identity.EntityFrameworkCore 6.0.13(.net 6)
 	
 
 	
- Config:
+ Config:- cấu hình cho identityServer4 ở Program.cs
+	- Có 2 phương pháp cấu hình cho IdentityServer4: InMemory,Database
+	
+	* đây là cách cấu hình cho InMemory
+	
+	
+	builder.Services.AddDbContext<ManageAppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))); (// lấy ra connectionString)
+
+        builder.Services.AddDefaultIdentity<ManageUser>(options => options.SignIn.RequireConfirmedAccount = true)
+   	 .AddEntityFrameworkStores<ManageAppDbContext>();
+
 
 	builder.Services.AddIdentityServer(options =>
 	{   
-   		 options.Events.RaiseErrorEvents = true;
-  		 options.Events.RaiseInformationEvents = true;
-  		 options.Events.RaiseFailureEvents = true;
-   		 options.Events.RaiseSuccessEvents = true;
+    		options.Events.RaiseErrorEvents = true;
+    		options.Events.RaiseInformationEvents = true;
+    		options.Events.RaiseFailureEvents = true;
+    		options.Events.RaiseSuccessEvents = true;
 	})
- - InMemory: 
-    .AddInMemoryApiResources(Config.Apis)
-    .AddInMemoryClients(builder.Configuration.GetSection("IdentityServer:Clients"))
-    .AddInMemoryIdentityResources(Config.Ids)
-    .AddInMemoryApiScopes(Config.ApiScopes)
-    .AddAspNetIdentity<ManageUser>()
-    .AddDeveloperSigningCredential();
+    	.AddInMemoryApiResources(Config.Apis)
+    	.AddInMemoryClients(builder.Configuration.GetSection("IdentityServer:Clients"))
+    	.AddInMemoryIdentityResources(Config.Ids)
+    	.AddInMemoryApiScopes(Config.ApiScopes)
+    	.AddAspNetIdentity<ManageUser>()
+    	.AddDeveloperSigningCredential(); =>  cấu hình InMemory: 
 
-- Db: use database to save values
-	var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
-	const string connectionString = @"Data Source=(LocalDb)\MSSQLLocalDB;database=IdentityServer4.Quickstart.EntityFramework-4.0.0;trusted_connection=yes;";
 
-	services.AddIdentityServer()
-    	.AddTestUsers(TestUsers.Users)
+
+- cấu hình database : khi cấu hình database thì cần lấy được connectionString để lưu data
+	var defaultConnString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+
+	builder.Services.AddDbContext<AspNetIdentityDbContext>(options =>
+    		options.UseSqlServer(defaultConnString,b => b.MigrationsAssembly(assembly)));
+
+	builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+    		.AddEntityFrameworkStores<AspNetIdentityDbContext>();
+
+	builder.Services.AddIdentityServer()
+    	.AddAspNetIdentity<IdentityUser>()
     	.AddConfigurationStore(options =>
-    	{
-       		 options.ConfigureDbContext = b => b.UseSqlServer(connectionString,
-          	  sql => sql.MigrationsAssembly(migrationsAssembly));
-    	})
-    	.AddOperationalStore(options =>
-    	{
-        	options.ConfigureDbContext = b => b.UseSqlServer(connectionString,
-           	 sql => sql.MigrationsAssembly(migrationsAssembly));
-    	});
+   	{
+       		 options.ConfigureDbContext = b => b.UseSqlServer(defaultConnString, opt => opt.MigrationsAssembly(assembly));
+    	}).AddOperationalStore(options =>
+    		{
+       			 options.ConfigureDbContext = b => b.UseSqlServer(defaultConnString, opt => opt.MigrationsAssembly(assembly));
+    	}).AddDeveloperSigningCredential();
 
- 	+ when we use db to save values ,we must config 3 type :ApiScope,ApiResource,Client
-		.ApiScope: https://identityserver4.readthedocs.io/en/latest/reference/api_scope.html
-		.ApiResource: https://identityserver4.readthedocs.io/en/latest/reference/api_resource.html
-		.Client: https://identityserver4.readthedocs.io/en/latest/reference/client.html
+
+ 	+ khi dùng IdentityServer4 sẽ cần cấu hình các ApiScope,Client
+		.ApiScope: Api là 1 resource trong hệ thống của bạn mà bạn muốn bảo vệ, Resource có thể được tải với rất nhiều cách và lúc này chúng ta cần phải bảo vệ Api của chúng ta
+			   dưới đây là cách để cấu hình 1 ApiScope
+			Link Doc: https://identityserver4.readthedocs.io/en/latest/reference/api_scope.html
+			
+			ví dụ về khai báo 1 ApiScope:
+			
+			public static class Config
+			{
+    				public static IEnumerable<ApiScope> ApiScopes => new List<ApiScope>
+        			{
+            				new ApiScope("api1", "My API")
+        			};
+			}	
+	
+			
+
+		.Client: được dùng để khai báo ứng dụng khách hàng nào có thể được truy cập vào API 
+			link Doc: https://identityserver4.readthedocs.io/en/latest/reference/client.html
+			
+			ví dụ về việc khai báo 1 client mới:
+
+			public static IEnumerable<Client> Clients => new List<Client>
+    			{
+        			new Client
+        			{
+            				ClientId = "client",
+
+            				// no interactive user, use the clientid/secret for authentication
+            				AllowedGrantTypes = GrantTypes.ClientCredentials,
+
+            				// secret for authentication
+            				ClientSecrets =
+           	 			{
+               				 new Secret("secret".Sha256())
+           				 },
+
+           				 // scopes that client has access to
+           				 AllowedScopes = { "api1" }
+       				 }
+    			};	
+			
