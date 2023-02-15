@@ -1,3 +1,25 @@
+1.  IdentityServer4 is an open-source framework that helps developers add authentication and authorization functionality to their applications.
+    
+2.  The framework supports a variety of authentication protocols, including OAuth 2.0, OpenID Connect, and SAML.
+    
+3.  To get started with IdentityServer4, you'll need to have a basic understanding of ASP.NET Core and C#.
+    
+4.  IdentityServer4 can be used with a wide range of client applications, including web, mobile, and desktop applications.
+    
+5.  When working with IdentityServer4, it's important to understand the concept of scopes, which are used to define the permissions granted to clients.
+    
+6.  You'll also need to be familiar with the concept of claims, which are used to represent user information and permissions.
+    
+7.  IdentityServer4 provides a number of built-in features, such as support for multi-factor authentication and user consent.
+    
+8.  When implementing IdentityServer4, it's important to follow best practices for security, such as using strong passwords and encrypting sensitive data.
+    
+9.  The IdentityServer4 documentation is a great resource for learning more about the framework and how to use it effectively.
+    
+10.  Finally, it's important to test your IdentityServer4 implementation thoroughly to ensure that it's secure and functioning as expected.
+    
+
+These are just a few of the key points to keep in mind when learning IdentityServer4. As with any framework or technology, it's important to be patient.
 Pakage: Các thư viện cần thêm vào để có thể triển khai IdentityServer4
 	- Microsoft.AspNetCore.Identity.EntityFrameworkCore 6.0.13(.net 6)
 	- Microsoft.AspNetCore.Identity.UI (6.0.13 .net 6)
